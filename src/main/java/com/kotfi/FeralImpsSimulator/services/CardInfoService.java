@@ -33,7 +33,7 @@ public class CardInfoService {
             StringBuilder sb = new StringBuilder(API_ENDPOINT);
             sb.append("?race=reptile");
             String json = sendAPIRequest(sb.toString());
-            System.out.println(json);
+//            System.out.println(json);
             ResponseData response = deserialize(json);
             reptileCards = response.getData();
         }
@@ -59,7 +59,7 @@ public class CardInfoService {
             return null;
         }
         String json = sendAPIRequest(queryString.toString());
-        System.out.println(json);
+//        System.out.println(json);
         return deserialize(json).getData().get(0);
     }
 
