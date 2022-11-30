@@ -28,6 +28,10 @@ public class CardImage {
     public void setImage_url_small(String image_url_small) {
         this.image_url_small = image_url_small;
     }
+    public String getImageName() {
+        int start = this.image_url.lastIndexOf("/");
+        return this.image_url.substring(start + 1);
+    }
 
     @Override
     public String toString() {

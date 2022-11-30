@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="detach">
+  <div id="kotfi" th:with="image=${kotfi.cardImages.get(0).imageName}">
+    <img  th:src="@{${'images/' + image}}">
+  </div>
+  <div class="card" th:each="material : ${materials}">
+      <div th:with="image=${material.cardImages.get(0).imageName}">
+          <img  th:src="@{${'images/' + image}}">
+      </div>
+  </div>
+</div>
+<div id="result">
+    <div class="card" th:each="reptile : ${reptiles}">
+        <div th:with="image=${reptile.cardImages.get(0).imageName}">
+            <img  th:src="@{${'images/' + image}}">
+        </div>
+    </div>
+</div>
+</body>
+</html>
