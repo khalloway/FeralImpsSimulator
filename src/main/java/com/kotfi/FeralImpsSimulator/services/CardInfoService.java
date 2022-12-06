@@ -2,6 +2,7 @@ package com.kotfi.FeralImpsSimulator.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.kotfi.FeralImpsSimulator.FeralImpsSimulatorApplication;
 import com.kotfi.FeralImpsSimulator.models.CardInfo;
 import com.kotfi.FeralImpsSimulator.models.ResponseData;
 import com.kotfi.FeralImpsSimulator.utils.ResponseDataDeserializer;
@@ -13,12 +14,14 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -26,22 +29,65 @@ import java.util.List;
 public class CardInfoService {
 
     private static final String API_ENDPOINT = "https://db.ygoprodeck.com/api/v7/cardinfo.php";
-    private static final String ENCODING = "UTF-8";
 
     private static List<CardInfo> reptileCards;
 
-    @Autowired
-    ResourceLoader resourceLoader;
+    private static final String DATA_FILE = "/card_info/data.json";
+    private static final String IMAGE_FOLDER = "/card_info/images/";
 
-    @Value("${resources.carddata}")
-    private String cardData;
+    private static File dataFile;
+    private static File imageFolder;
+
+    public static File resourceRoot;
+
+    public CardInfoService() {
+        try {
+            resourceRoot = new File(FeralImpsSimulatorApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            // create files/folders
+            dataFile = new File(resourceRoot + "/" + DATA_FILE);
+            if (!dataFile.exists()) {
+                dataFile.getParentFile().mkdirs();
+                dataFile.createNewFile();
+            }
+            imageFolder = new File(resourceRoot + "/" + IMAGE_FOLDER);
+            if (!imageFolder.exists()) {
+                imageFolder.mkdirs();
+                imageFolder.createNewFile();
+            }
+            updateCardInfo();
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+            dataFile = null;
+            imageFolder = null;
+        }
+    }
+
+    private void updateCardInfo() throws IOException {
+        // write json to file
+        StringBuilder sb = new StringBuilder(API_ENDPOINT);
+        sb.append("?race=reptile");
+        String json = sendAPIRequest(sb.toString());
+        try (FileWriter w = new FileWriter(dataFile)) {
+            w.write(json);
+        }
+        // download images
+        ResponseData response = deserialize(json);
+        for(CardInfo info : response.getData()) {
+            info.getCardImages().get(0).downloadImage();
+        }
+    }
 
     public List<CardInfo> getAllReptileCards() {
         String json = null;
-        StringBuilder sb = new StringBuilder(API_ENDPOINT);
-        sb.append("?race=reptile");
-        if(reptileCards == null) {
+        try {
+            json = Files.readString(dataFile.toPath());
+        } catch (IOException e) {
+            StringBuilder sb = new StringBuilder(API_ENDPOINT);
+            sb.append("?race=reptile");
             json = sendAPIRequest(sb.toString());
+        }
+
+        if(reptileCards == null) {
             ResponseData response = deserialize(json);
             reptileCards = response.getData();
         }
@@ -108,5 +154,17 @@ public class CardInfoService {
             e.printStackTrace();
             return "";
         }
+    }
+
+    public static File getDataFile() {
+        return dataFile;
+    }
+
+    public static File getImageFolder() {
+        return imageFolder;
+    }
+
+    public static File getResourceRoot() {
+        return resourceRoot;
     }
 }

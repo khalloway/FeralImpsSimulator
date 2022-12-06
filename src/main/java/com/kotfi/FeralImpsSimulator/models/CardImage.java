@@ -1,5 +1,13 @@
 package com.kotfi.FeralImpsSimulator.models;
 
+import com.kotfi.FeralImpsSimulator.FeralImpsSimulatorApplication;
+import com.kotfi.FeralImpsSimulator.services.CardInfoService;
+
+import java.io.*;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public class CardImage {
     private int id;
     private String image_url;
@@ -31,6 +39,17 @@ public class CardImage {
     public String getImageName() {
         int start = this.image_url.lastIndexOf("/");
         return this.image_url.substring(start + 1);
+    }
+
+    public void downloadImage() throws IOException {
+        URL url = new URL(image_url);
+        String filePath = CardInfoService.getResourceRoot() + "/" + getImageName();
+        if(!Files.exists(Path.of(filePath))) {
+            try (InputStream in = new BufferedInputStream(url.openStream());
+                 FileOutputStream out = new FileOutputStream(filePath)) {
+                out.write(in.readAllBytes());
+            }
+        }
     }
 
     @Override
