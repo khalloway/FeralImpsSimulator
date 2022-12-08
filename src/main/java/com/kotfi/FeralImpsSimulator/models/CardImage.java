@@ -42,14 +42,14 @@ public class CardImage {
     }
 
     public void downloadImage() throws IOException {
-        URL url = new URL(image_url);
-        String filePath = CardInfoService.getResourceRoot() + "/" + getImageName();
-        if(!Files.exists(Path.of(filePath))) {
-            try (InputStream in = new BufferedInputStream(url.openStream());
-                 FileOutputStream out = new FileOutputStream(filePath)) {
-                out.write(in.readAllBytes());
-            }
-        }
+//        URL url = new URL(image_url);
+//        String filePath = CardInfoService.getResourceRoot() + "/" + getImageName();
+//        if(!Files.exists(Path.of(filePath))) {
+//            try (InputStream in = new BufferedInputStream(url.openStream());
+//                 FileOutputStream out = new FileOutputStream(filePath)) {
+//                out.write(in.readAllBytes());
+//            }
+//        }
     }
 
     @Override

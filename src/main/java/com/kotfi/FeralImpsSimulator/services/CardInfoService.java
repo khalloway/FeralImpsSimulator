@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.kotfi.FeralImpsSimulator.FeralImpsSimulatorApplication;
 import com.kotfi.FeralImpsSimulator.models.CardInfo;
 import com.kotfi.FeralImpsSimulator.models.ResponseData;
+import com.kotfi.FeralImpsSimulator.repository.CardRepository;
 import com.kotfi.FeralImpsSimulator.utils.ResponseDataDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,66 +33,26 @@ public class CardInfoService {
 
     private static List<CardInfo> reptileCards;
 
-    private static final String DATA_FILE = "/card_info/data.json";
-    private static final String IMAGE_FOLDER = "/card_info/images/";
+    private final CardRepository cardRepository;
 
-    private static File dataFile;
-    private static File imageFolder;
-
-    public static File resourceRoot;
-
-    public CardInfoService() {
-        try {
-            resourceRoot = new File(FeralImpsSimulatorApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            // create files/folders
-            dataFile = new File(resourceRoot + "/" + DATA_FILE);
-            if (!dataFile.exists()) {
-                dataFile.getParentFile().mkdirs();
-                dataFile.createNewFile();
-            }
-            imageFolder = new File(resourceRoot + "/" + IMAGE_FOLDER);
-            if (!imageFolder.exists()) {
-                imageFolder.mkdirs();
-                imageFolder.createNewFile();
-            }
-            updateCardInfo();
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
-            dataFile = null;
-            imageFolder = null;
-        }
+    public CardInfoService(CardRepository cardRepository) {
+        this.cardRepository = cardRepository;
+        updateCardInfo();
     }
 
-    private void updateCardInfo() throws IOException {
-        // write json to file
+    private void updateCardInfo() {
+        // pull data from API and save to database
         StringBuilder sb = new StringBuilder(API_ENDPOINT);
         sb.append("?race=reptile");
         String json = sendAPIRequest(sb.toString());
-        try (FileWriter w = new FileWriter(dataFile)) {
-            w.write(json);
-        }
-        // download images
         ResponseData response = deserialize(json);
         for(CardInfo info : response.getData()) {
-            info.getCardImages().get(0).downloadImage();
+            cardRepository.save(info);
         }
     }
 
     public List<CardInfo> getAllReptileCards() {
-        String json = null;
-        try {
-            json = Files.readString(dataFile.toPath());
-        } catch (IOException e) {
-            StringBuilder sb = new StringBuilder(API_ENDPOINT);
-            sb.append("?race=reptile");
-            json = sendAPIRequest(sb.toString());
-        }
-
-        if(reptileCards == null) {
-            ResponseData response = deserialize(json);
-            reptileCards = response.getData();
-        }
-        return reptileCards;
+        return cardRepository.findAllReptiles();
     }
 
     /**
@@ -99,16 +60,7 @@ public class CardInfoService {
      * @return List of CardInfo excluding XYZ, Link, Synchro, and Fusion monsters.
      */
     public List<CardInfo> getMainDeckReptileCards() {
-        if(reptileCards == null) {
-            getAllReptileCards();
-        }
-
-        return reptileCards.stream()
-                .filter(card -> {
-                    String cardType = card.getType();
-                    return !(cardType.contains("XYZ") || cardType.contains("Link") || cardType.contains("Synchro") || cardType.contains("Fusion"));
-                })
-                .toList();
+        return cardRepository.findMainDeckReptiles();
     }
 
     /**
@@ -124,14 +76,7 @@ public class CardInfoService {
     }
 
     public CardInfo getCardByName(String name) {
-        if(reptileCards == null) {
-            getAllReptileCards();
-        }
-
-        return reptileCards.stream()
-                .filter(cardInfo -> cardInfo.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(null);
+        return cardRepository.findCardByName(name);
     }
 
     private ResponseData deserialize(String json) {
@@ -154,17 +99,5 @@ public class CardInfoService {
             e.printStackTrace();
             return "";
         }
-    }
-
-    public static File getDataFile() {
-        return dataFile;
-    }
-
-    public static File getImageFolder() {
-        return imageFolder;
-    }
-
-    public static File getResourceRoot() {
-        return resourceRoot;
     }
 }
