@@ -19,8 +19,11 @@ public class CardInfoAPIController {
 
     @GetMapping(path="/all")
     public List<CardInfo> getAllReptiles() {
-        return infoService.getMainDeckReptileCards();
+        return infoService.getAllReptileCards();
     }
+
+    @GetMapping(path="/main")
+    public List<CardInfo> getMainDeckReptiles() {return infoService.getMainDeckReptileCards();}
 
     @GetMapping(path="/lvl4")
     public List<CardInfo> getLevelFourReptiles() {

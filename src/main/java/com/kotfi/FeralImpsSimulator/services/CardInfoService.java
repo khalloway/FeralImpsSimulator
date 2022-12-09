@@ -46,8 +46,11 @@ public class CardInfoService {
         sb.append("?race=reptile");
         String json = sendAPIRequest(sb.toString());
         ResponseData response = deserialize(json);
-        for(CardInfo info : response.getData()) {
-            cardRepository.save(info);
+        // only update if new cards were added
+        if(cardRepository.count() < response.getData().size()) {
+            for (CardInfo info : response.getData()) {
+                cardRepository.save(info);
+            }
         }
     }
 
